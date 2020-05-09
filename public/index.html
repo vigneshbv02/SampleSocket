@@ -1,73 +1,77 @@
-<html lang="en">
-
+<html>
 <head>
-  <meta charset="utf-8" />
-  <title>Websocket</title>
+    <meta charset="utf-8"/>
+    <title>Websocket</title>
 </head>
 <style>
-  button {
-    margin: 1%;
-  }
+    button {
+        margin: 1%;
+    }
 
-  input[type=text] {
-    margin: 1%;
-  }
+    input[type=text] {
+        margin: 1%;
+    }
 </style>
 
 <body>
-<input type="text" placeholder="Enter the water capacity" id="eingabe" /><br />
+<input type="text" placeholder="Enter the water capacity" id="eingabe"/><br/>
 <button onclick="myFunction('device001', 'on')">Switch On Device 1</button>
-<button onclick="myFunction('device001', 'off')">Switch Off Device 1</button><br />
+<button onclick="myFunction('device001', 'off')">Switch Off Device 1</button>
+<br/>
 <button onclick="myFunction('device002', 'on')">Switch On Device 2</button>
 <button onclick="myFunction('device002', 'off')">Switch Off Device 2</button>
 <div style="overflow:scroll; width: 800px; height: 550px; border: solid; border-radius: 9px" id="display"></div>
-  <script src="/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script>
-  //var sock =new WebSocket("ws://localhost:5001");
-  var sock = io("ws://localhost:3000");  //replace this address with the one the node.js server prints out. keep port 3000
-  var display = document.getElementById("display")
+    var socket = io();
+    socket.on('connect', function (event) {
+        //alert("Socket connected successfully!!!")
+        socket.emit('socket_id', socket.id);
+        console.log(socket._id);
+        display.innerHTML += "connection succeeded <br />";
+        socket.on('disconnect', () => {
+            console.log('user disconnected');
+        });
+    });
 
-  sock.onopen = function (event) {
-    //alert("Socket connected succesfully!!!")
-    setTimeout(function () { sock.send('connection succeeded'); }, 1000);
-    display.innerHTML += "connection succeeded <br />";
-  };
-  sock.onmessage = function (event) {
-    console.log(event);//show received from server data in console of browser
-    display.innerHTML += event.data + "<br />"; //add incoming message from server to the log screen previous string + new string(message)
-  }
+    function myFunction(DeviceId, message) {
+        //socket.send("Hello");
+        // if (event.keyCode == 13) {     //when enter is pressed...
+        var text = document.getElementById('eingabe').value;    //assign value of the entered string to te text variable
+        // if (text != "") {     //if text is not an empty string
+        //display.innerHTML+="From Client: "+text+"<br />"; //show the message from client in div
 
-  function myFunction(DeviceId, message) {
-    //sock.send("Hello");
-    // if (event.keyCode == 13) {     //when enter is pressed...
-    var text = document.getElementById('eingabe').value;    //assign value of the entered string to te text variable
-    // if (text != "") {     //if text is not an empty string
-    //display.innerHTML+="From Client: "+text+"<br />"; //show the message from client in div
+        var capacity = text !== "" && text !== "0" ? text : "2";
+        capacity = message === "on" ? capacity : null;
 
-    var capacity = text !== "" && text !== "0" ? text : "2";
-    capacity = message === "on" ? capacity : null;
+        var data = {
+            deviceId: DeviceId,
+            capacity: capacity,
+            status: message
+        };
 
-    var data = {
-      deviceId: DeviceId,
-      capacity: capacity,
-      status: message
+        data = JSON.stringify(data);
+        socket.emit("send_data", data);
+        //socket.send(data);    //send string to server
+        display.innerHTML += "<strong>Data: </strong>" + data + "<br />";       //display input text in div (client side)
+        document.getElementById('eingabe').value = "";     //and clear the input field
     }
 
-    data = JSON.stringify(data);
-
-    sock.send(data);    //send string to server
-    display.innerHTML += "<strong>Data: </strong>" + data + "<br />";       //display input text in div (client side)
-    document.getElementById('eingabe').value = "";     //and clear the input field
-    // }
-    // else {
-    //     console.log("empty string not sent")
-    // }
-    // }
-  }
-  function clearlog() {
-    display.innerHTML = "";
-  }
+    function clearlog() {
+        display.innerHTML = "";
+    }
 </script>
+<!--    <script>-->
+<!--        //var sock =new WebSocket("ws://localhost:5001");-->
+<!--        var sock = new WebSocket("ws://192.168.1.5:8000");  //replace this address with the one the node.js server prints out. keep port 3000-->
+<!--        var display = document.getElementById("display")-->
+
+
+<!--        sock.onmessage = function (event) {-->
+<!--            console.log(event);//show received from server data in console of browser-->
+<!--            display.innerHTML += event.data + "<br />"; //add incoming message from server to the log screen previous string + new string(message)-->
+<!--        }
+    </script>-->
 </body>
 
 </html>
